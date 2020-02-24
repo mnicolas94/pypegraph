@@ -1,4 +1,4 @@
-from Graph.Node import Node
+from pypegraph.Node import Node
 import utiles
 
 

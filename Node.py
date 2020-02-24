@@ -46,11 +46,20 @@ class Node(object):
 				else:
 					node.input_connections.pop(node_name)
 
-	def receive_input(self, input, input_name=''):
+	def add_input(self, input, input_name=''):
 		if input_name == '':
 			self.inputs.setdefault(input_name, []).append(input)
 		else:
 			self.inputs[input_name] = input
+
+	def receive_input(self, *args, **kwargs):
+		if len(args) > 0:
+			self.add_input(*args)
+		elif len(kwargs) > 0:
+			karg, arg = list(kwargs.items())[0]
+			self.add_input(arg, karg)  # TODO pasarle todos los parámetros del diccionario
+		elif len(self.input_connections) > 0:
+			self.input_notifications += 1
 
 	def all_inputs_received(self):
 		"""
@@ -96,17 +105,13 @@ class Node(object):
 		self.input_notifications = 0
 		self.output = None
 
-	def __call__(self, *args, **kwargs):
-		if len(args) > 0:
-			self.receive_input(*args)
-		elif len(kwargs) > 0:
-			karg, arg = list(kwargs.items())[0]
-			self.receive_input(arg, karg)  # TODO pasarle todos los parámetros del diccionario
-		elif len(self.input_connections) > 0:
-			self.input_notifications += 1
+	def execute_and_notify(self):
+		self.execute_action()
+		self.notify()
+		self.clear_inputs_output()
 
+	def __call__(self, *args, **kwargs):
+		self.receive_input(*args, **kwargs)
 		if self.all_inputs_received():
-			self.execute_action()
-			self.notify()
-			self.clear_inputs_output()
+			self.execute_and_notify()
 
