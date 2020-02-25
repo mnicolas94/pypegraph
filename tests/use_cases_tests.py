@@ -20,6 +20,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 		draw_best_node = Node(action=utiles.draw_detections)
 		output_node1 = Node(action=lambda image: cv.imshow('Detection', image))
 
+		# this node it's for validation only
 		global num_outputs
 		num_outputs = 0
 		def on_output():
@@ -35,6 +36,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 		draw_best_node.connect(output_node1)
 		output_node1.connect(validator_node)
 
+		# run pipeline
 		input_node()
 		self.assertEqual(num_outputs, 1)
 
@@ -57,6 +59,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 		output_node3 = Node(action=lambda image: cv.imshow('detection', image))
 		output_node4 = Node(action=lambda image: cv.imshow('cropped', image))
 
+		# this node it's for validation only
 		global end_reached
 		end_reached = False
 		def on_output():
@@ -88,6 +91,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 		output_node3.connect(validator_node)
 		output_node4.connect(validator_node)
 
+		# run pipeline
 		input_node()
 		self.assertEqual(end_reached, 1)
 

@@ -1,4 +1,5 @@
 import utiles
+from pypegraph.Action import Action
 
 
 class Node(object):
@@ -6,14 +7,23 @@ class Node(object):
 	TODO
 	"""
 
-	def __init__(self, action):
+	def __init__(self, action, sequential=True):
 		self.inputs = {}
 		self.input_notifications = 0  # esta es la cantidad de entradas recibidas de nodos que no brindan salida
 		self.input_connections = {}
+
 		self.output = None
 		self.output_connections = {}
+
 		self.action = action
 		self.__action_inputs = utiles.number_callable_params(self.action)
+
+		# wether to execute the node action on all inputs recieved
+		self.sequential = sequential  # TODO considerar cambiar el nombre
+
+		self.eventReceivedInput = Action()
+		self.eventAllInputsReceived = Action()
+		self.eventActionExecuted = Action()
 
 	def connect(self, node, node_name=''):
 		"""
@@ -47,12 +57,24 @@ class Node(object):
 					node.input_connections.pop(node_name)
 
 	def add_input(self, input, input_name=''):
+		"""
+		Adds a received input to the list of received inputs.
+		:param input:
+		:param input_name:
+		:return:
+		"""
 		if input_name == '':
 			self.inputs.setdefault(input_name, []).append(input)
 		else:
 			self.inputs[input_name] = input
 
 	def receive_input(self, *args, **kwargs):
+		"""
+		Receives an input from an input connection.
+		:param args:
+		:param kwargs:
+		:return:
+		"""
 		if len(args) > 0:
 			self.add_input(*args)
 		elif len(kwargs) > 0:
@@ -60,6 +82,8 @@ class Node(object):
 			self.add_input(arg, karg)  # TODO pasarle todos los parámetros del diccionario
 		elif len(self.input_connections) > 0:
 			self.input_notifications += 1
+
+		self.eventReceivedInput.invoke(*args, **kwargs)
 
 	def all_inputs_received(self):
 		"""
@@ -80,6 +104,7 @@ class Node(object):
 			self.output = self.action(*inputs, **named_inputs)
 		else:
 			self.output = self.action()
+		self.eventActionExecuted.invoke(self.output)
 
 	def notify(self):
 		"""
@@ -113,5 +138,7 @@ class Node(object):
 	def __call__(self, *args, **kwargs):
 		self.receive_input(*args, **kwargs)
 		if self.all_inputs_received():
-			self.execute_and_notify()
+			self.eventAllInputsReceived.invoke(self)
+			if self.sequential:
+				self.execute_and_notify()
 

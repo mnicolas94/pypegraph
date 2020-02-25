@@ -3,19 +3,19 @@ import utiles
 
 class Action:
 	"""
-	TODO
+	C#-like Action (see at https://docs.microsoft.com/en-us/dotnet/api/system.action?view=netframework-4.8).
 	"""
 
 	def __init__(self):
 		self.callbacks = []
 
-	def __add__(self, other):
+	def __iadd__(self, other):
 		if callable(other):
 			if other not in self.callbacks:
 				self.callbacks.append(other)
 		return self
 
-	def __sub__(self, other):
+	def __isub__(self, other):
 		if callable(other):
 			if other in self.callbacks:
 				self.callbacks.remove(other)
@@ -31,8 +31,11 @@ class Action:
 
 
 if __name__ == '__main__':
+	print('Testing...')
 	a = Action()
-	a += lambda: print('123')
+	def f(x): print('123')
+	a += f
+	a.invoke(2, 3)
+	a -= f
 	a.invoke()
 	print('')
-
