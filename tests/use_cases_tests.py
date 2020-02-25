@@ -10,6 +10,29 @@ class TestPypegraphUseCases(unittest.TestCase):
 	def setUp(self):
 		super().setUp()
 
+	def test_node_disconnection(self):
+		n1 = Node(action=lambda: 1)
+		n2 = Node(action=lambda x: 2 + x)
+
+		def f3(*xs): return sum(xs)
+		n3 = Node(action=f3)
+
+		def f4(x):
+			global result
+			result = x**2
+		n4 = Node(action=lambda x: f4(x))
+
+		n1.connect(n2)
+		n1.connect(n3)
+		n2.connect(n3)
+		n3.connect(n4)
+
+		n1()
+		self.assertEqual(result, 16)
+		n1.disconnect(n3)
+		n1()
+		self.assertEqual(result, 9)
+
 	def test_simple_pipeline(self):
 		detector = FaceDetectorFaceRetail()
 
@@ -20,7 +43,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 		draw_best_node = Node(action=utiles.draw_detections)
 		output_node1 = Node(action=lambda image: cv.imshow('Detection', image))
 
-		# this node it's for validation only
+		# this node is for validation only
 		global num_outputs
 		num_outputs = 0
 		def on_output():
@@ -34,7 +57,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 		detector_node.connect(filter_det_node)
 		filter_det_node.connect(draw_best_node, 'detections')
 		draw_best_node.connect(output_node1)
-		output_node1.connect(validator_node)
+		output_node1.connect(on_output)
 
 		# run pipeline
 		input_node()
@@ -59,7 +82,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 		output_node3 = Node(action=lambda image: cv.imshow('detection', image))
 		output_node4 = Node(action=lambda image: cv.imshow('cropped', image))
 
-		# this node it's for validation only
+		# this node is for validation only
 		global end_reached
 		end_reached = False
 		def on_output():

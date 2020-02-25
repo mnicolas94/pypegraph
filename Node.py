@@ -1,5 +1,6 @@
 import utiles
 from pypegraph.Action import Action
+from pypegraph.Connection import Connection
 
 
 class Node(object):
@@ -13,7 +14,7 @@ class Node(object):
 		self.input_connections = {}
 
 		self.output = None
-		self.output_connections = {}
+		self.output_connections = []
 
 		self.action = action
 		self.__action_inputs = utiles.number_callable_params(self.action)
@@ -25,36 +26,40 @@ class Node(object):
 		self.eventAllInputsReceived = Action()
 		self.eventActionExecuted = Action()
 
-	def connect(self, node, node_name=''):
+	def connect(self, node, connection_name='', **configuration):
 		"""
 		TODO
 		:param node:
-		:param node_name:
+		:param connection_name:
 		:return:
 		"""
-		self.output_connections.setdefault(node_name, []).append(node)
-		# connect self as the other node input
+		connection = Connection(self, node, connection_name, **configuration)
+		self.output_connections.append(connection)
+		# put connection in the other node input connections
 		if isinstance(node, Node):
-			if node_name == '':
-				node.input_connections.setdefault(node_name, []).append(self)
+			if connection_name == '':
+				node.input_connections.setdefault(connection_name, []).append(connection)
 			else:
-				node.input_connections[node_name] = self
+				node.input_connections[connection_name] = connection
 
-	def disconnect(self, node, node_name=''):
+	def disconnect(self, node, connection_name=''):
 		"""
 		TODO
 		:param node:
-		:param node_name:
+		:param connection_name:
 		:return:
 		"""
-		if node_name in self.output_connections:
-			self.output_connections[node_name].remove(node)
+		connection = Connection(self, node, connection_name)  # TODO considerar hacerlo de otra manera, esto puede ser costoso por gusto
+		if connection in self.output_connections:
+			self.output_connections.remove(connection)
+
 		if isinstance(node, Node):
-			if node_name in node.input_connections:
-				if node_name == '':
-					node.input_connections[node_name].remove(self)
+			if connection_name in node.input_connections:
+				if connection_name == '':
+					if connection in node.input_connections['']:
+						node.input_connections[''].remove(connection)
 				else:
-					node.input_connections.pop(node_name)
+					node.input_connections.pop(connection_name)
 
 	def add_input(self, input, input_name=''):
 		"""
@@ -78,8 +83,11 @@ class Node(object):
 		if len(args) > 0:
 			self.add_input(*args)
 		elif len(kwargs) > 0:
-			karg, arg = list(kwargs.items())[0]
-			self.add_input(arg, karg)  # TODO pasarle todos los parámetros del diccionario
+			key, arg = list(kwargs.items())[0]
+			if key in self.input_connections:
+				self.add_input(arg, key)  # TODO pasarle todos los parámetros del diccionario
+			else:
+				print('Warning: Trying to add input not registered as inpu connection:', key)
 		elif len(self.input_connections) > 0:
 			self.input_notifications += 1
 
@@ -111,15 +119,8 @@ class Node(object):
 		TODO
 		:return:
 		"""
-		for name, callables in self.output_connections.items():
-			for callback in callables:
-				num_parameters = utiles.number_callable_params(callback)
-				if num_parameters == 0:  # esto es solo para cuando el callback es una función lambda en vez de un nodo
-					callback()
-				elif name == '':
-					callback(*[self.output])
-				else:
-					callback(**{name: self.output})
+		for connection in self.output_connections:
+			connection.send_output(self.output)
 
 	def clear_inputs_output(self):
 		"""
