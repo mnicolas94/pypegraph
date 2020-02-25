@@ -1,6 +1,6 @@
-import utiles
-from pypegraph.Action import Action
-from pypegraph.Connection import Connection
+import utils
+from Action import Action
+from Connection import Connection
 
 
 class Node(object):
@@ -17,7 +17,7 @@ class Node(object):
 		self.output_connections = []
 
 		self.action = action
-		self.__action_inputs = utiles.number_callable_params(self.action)
+		self.__action_inputs = utils.number_callable_params(self.action)
 
 		# wether to execute the node action on all inputs recieved
 		self.sequential = sequential  # TODO considerar cambiar el nombre

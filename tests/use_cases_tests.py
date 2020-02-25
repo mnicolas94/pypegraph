@@ -1,7 +1,6 @@
-from pypegraph.Node import Node
-from pipeline_graph_tests.Detectors import FaceDetectorFaceRetail
+from Node import Node
 import unittest
-import utiles
+import utils
 import cv2 as cv
 
 
@@ -34,13 +33,14 @@ class TestPypegraphUseCases(unittest.TestCase):
 		self.assertEqual(result, 9)
 
 	def test_simple_pipeline(self):
-		detector = FaceDetectorFaceRetail()
+		def detection(img):
+			return [((1, 1, 40, 40), 0.5), ((40, 50, 140, 150), 0.9)]
 
 		# crear nodos
-		input_node = Node(action=lambda: utiles.test_img())
-		detector_node = Node(action=detector.detect)
+		input_node = Node(action=lambda: utils.test_img())
+		detector_node = Node(action=detection)
 		filter_det_node = Node(action=lambda detections: [max(detections, key=lambda x: x[1])])
-		draw_best_node = Node(action=utiles.draw_detections)
+		draw_best_node = Node(action=utils.draw_detections)
 		output_node1 = Node(action=lambda image: cv.imshow('Detection', image))
 
 		# this node is for validation only
@@ -64,17 +64,18 @@ class TestPypegraphUseCases(unittest.TestCase):
 		self.assertEqual(num_outputs, 1)
 
 	def test_semicomplex_pipeline(self):
-		detector = FaceDetectorFaceRetail()
+		def detection(img):
+			return [((1, 1, 40, 40), 0.5), ((40, 50, 140, 150), 0.9)]
 
 		# crear nodos
-		input_node = Node(action=lambda: utiles.test_img())
+		input_node = Node(action=lambda: utils.test_img())
 
-		detector_node = Node(action=detector.detect)
+		detector_node = Node(action=detection)
 		filter_det_node = Node(action=lambda detections: [max(detections, key=lambda x: x[1])])
 		det2box_node = Node(action=lambda det: det[0][0])
 
-		drawer_node = Node(action=utiles.draw_detections)
-		draw_best_node = Node(action=utiles.draw_detections)
+		drawer_node = Node(action=utils.draw_detections)
+		draw_best_node = Node(action=utils.draw_detections)
 		cropper_node = Node(action=lambda image, box: image[box[1]:box[3], box[0]:box[2]])
 
 		output_node1 = Node(action=lambda image: cv.imshow('original', image))

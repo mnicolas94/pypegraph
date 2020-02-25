@@ -1,5 +1,4 @@
-# from pypegraph.Node import Node
-import utiles
+import utils
 
 
 class Connection(object):
@@ -11,7 +10,7 @@ class Connection(object):
 		self.input_node = input_node
 		self.output_node = output_node
 		self.output_name = output_name
-		self.__output_inputs = utiles.number_callable_params(output_node)  # number input paramaters of output_node
+		self.__output_inputs = utils.number_callable_params(output_node)  # number input paramaters of output_node
 		self.setup_configuration(**configuration)
 
 	def setup_configuration(self, **configuration):
