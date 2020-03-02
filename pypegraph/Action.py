@@ -1,4 +1,4 @@
-import utils
+from pypegraph import utils
 
 
 class Action:

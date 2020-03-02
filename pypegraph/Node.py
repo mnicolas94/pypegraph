@@ -1,6 +1,6 @@
-import utils
-from Action import Action
-from Connection import Connection
+from pypegraph import utils
+from pypegraph.Action import Action
+from pypegraph.Connection import Connection
 
 
 class Node(object):
@@ -135,5 +135,5 @@ class Node(object):
 		if self.all_inputs_received():
 			self.eventAllInputsReceived.invoke(self)
 			if self.sequential:
-				self.execute_and_notify()
+				self.execute_and_notify()  # TODO considerar poner esto como un observer del evento eventAllInputsReceived
 
