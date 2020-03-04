@@ -116,19 +116,18 @@ class Node(object):
 		for connection in self.output_connections:
 			connection.send_output(self.output)
 
-	def clear_inputs_output(self):
+	def clear_inputs(self):
 		"""
-		Limpiar el diccionario de las entradas recibidas y la salida calculada.
+		Limpiar el diccionario de las entradas recibidas.
 		:return:
 		"""
 		self.inputs.clear()
 		self.input_notifications = 0
-		self.output = None
 
 	def execute_and_notify(self):
 		self.execute_action()
+		self.clear_inputs()
 		self.notify()
-		self.clear_inputs_output()
 
 	def __call__(self, *args, **kwargs):
 		self.receive_input(*args, **kwargs)

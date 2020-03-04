@@ -19,9 +19,7 @@ class Connection(object):
 		self.parallel = conf.pop('parallel', False)  # execution of output node will be done in another thread (or process)
 
 	def send_output(self, output):
-		if self.outputless or self.__output_inputs == 0:
-			self.output_node()
-		elif self.output_name == '':
+		if self.output_name == '':
 			self.output_node(*[output])
 		else:
 			self.output_node(**{self.output_name: output})

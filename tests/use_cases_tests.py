@@ -46,10 +46,9 @@ class TestPypegraphUseCases(unittest.TestCase):
 		# this node is for validation only
 		global num_outputs
 		num_outputs = 0
-		def on_output():
+		def on_output(*_):
 			global num_outputs
 			num_outputs += 1
-		validator_node = Node(action=on_output)
 
 		# conexiones
 		input_node.connect(detector_node)
@@ -86,10 +85,9 @@ class TestPypegraphUseCases(unittest.TestCase):
 		# this node is for validation only
 		global end_reached
 		end_reached = False
-		def on_output():
+		def on_output(*_):
 			global end_reached
 			end_reached = True
-		validator_node = Node(action=on_output)
 
 		# conexiones
 		input_node.connect(detector_node)
@@ -110,10 +108,10 @@ class TestPypegraphUseCases(unittest.TestCase):
 		draw_best_node.connect(output_node3)
 		cropper_node.connect(output_node4)
 
-		output_node1.connect(validator_node)
-		output_node2.connect(validator_node)
-		output_node3.connect(validator_node)
-		output_node4.connect(validator_node)
+		output_node1.connect(on_output)
+		output_node2.connect(on_output)
+		output_node3.connect(on_output)
+		output_node4.connect(on_output)
 
 		# run pipeline
 		input_node()
