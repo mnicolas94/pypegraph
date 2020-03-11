@@ -27,10 +27,71 @@ class TestPypegraphUseCases(unittest.TestCase):
 		n3.connect(n4)
 
 		n1()
-		self.assertEqual(result, 16)
+		self.assertEqual(16, result)
 		n1.disconnect(n3)
 		n1()
-		self.assertEqual(result, 9)
+		self.assertEqual(9, result)
+
+	def test_ignore_output(self):
+		n1 = Node(action=lambda: 1)
+		n2 = Node(action=lambda x: 2 + x)
+
+		def executed_first(first):
+			global ef
+			ef = first
+
+		def f3(*xs):
+			executed_first(False)
+			return sum(xs)
+
+		n3 = Node(action=f3)
+		n3.eventReceivedInput += lambda*_: executed_first(True)
+
+		def f4(x):
+			global result
+			result = x ** 2
+
+		n4 = Node(action=lambda x: f4(x))
+
+		n1.connect(n2)
+		n1.connect(n3, ignore_output=True)
+		n2.connect(n3)
+		n3.connect(n4)
+
+		n1()
+		self.assertEqual(9, result)
+		self.assertFalse(ef)  # verificar que el nodo 3 se ejecutó después de haber recibido ambas entradas (n1 y n2)
+
+	def test_parallel_notification(self):
+		# TODO
+		pass
+
+	def test_execute_midle_graph(self):
+		"""
+		Test a graph execution begining from an intermediate node instead from the first one.
+		It is required to pass that intermediate node's arguments.
+		:return:
+		"""
+		n1 = Node(action=lambda: 1)
+		n2 = Node(action=lambda x: 2 + x)
+
+		def f3(*xs): return sum(xs)
+
+		n3 = Node(action=f3)
+
+		def f4(x):
+			global result
+			result = x ** 2
+
+		n4 = Node(action=lambda x: f4(x))
+
+		n1.connect(n2)
+		n1.connect(n3)
+		n2.connect(n3)
+		n3.connect(n4)
+
+		n3(*[1, 2, 3, 4])
+		self.assertEqual(100, result)
 
 	def test_simple_pipeline(self):
 		def detection(img):
@@ -49,7 +110,6 @@ class TestPypegraphUseCases(unittest.TestCase):
 		def on_output():
 			global num_outputs
 			num_outputs += 1
-		validator_node = Node(action=on_output)
 
 		# conexiones
 		input_node.connect(detector_node)
@@ -61,7 +121,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 
 		# run pipeline
 		input_node()
-		self.assertEqual(num_outputs, 1)
+		self.assertEqual(1, num_outputs)
 
 	def test_semicomplex_pipeline(self):
 		def detection(img):
@@ -117,7 +177,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 
 		# run pipeline
 		input_node()
-		self.assertEqual(end_reached, 1)
+		self.assertEqual(1, end_reached)
 
 
 if __name__ == '__main__':

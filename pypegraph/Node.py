@@ -1,6 +1,5 @@
 from pypegraph import utils
 from pypegraph.Action import Action
-from pypegraph.Connection import Connection
 
 
 class Node(object):
@@ -10,8 +9,7 @@ class Node(object):
 
 	def __init__(self, action, sequential=True):
 		self.inputs = {}
-		self.input_notifications = 0  # esta es la cantidad de entradas recibidas de nodos que no brindan salida
-		self.input_connections = []
+		self.input_connections = {}
 
 		self.output = None
 		self.output_connections = []
@@ -25,6 +23,7 @@ class Node(object):
 		self.eventReceivedInput = Action()
 		self.eventAllInputsReceived = Action()
 		self.eventActionExecuted = Action()
+		self.eventNotify = Action()
 
 	def connect(self, node, connection_name='', **configuration):
 		"""
@@ -33,11 +32,13 @@ class Node(object):
 		:param connection_name:
 		:return:
 		"""
-		connection = Connection(self, node, connection_name, **configuration)
-		self.output_connections.append(connection)
-		# put connection in the other node input connections
 		if isinstance(node, Node):
-			node.input_connections.append(connection)
+			self.eventNotify += node.receive_input
+			configuration['connection_name'] = connection_name
+			# put connection in the other node input connections
+			node.input_connections.setdefault(self, []).append(configuration)
+		else:
+			self.eventNotify += node  # treat it like a callable
 
 	def disconnect(self, node, connection_name=''):
 		"""
@@ -46,64 +47,59 @@ class Node(object):
 		:param connection_name:
 		:return:
 		"""
-		connection = Connection(self, node, connection_name)  # TODO considerar hacerlo de otra manera, esto puede ser costoso por gusto
-		if connection in self.output_connections:
-			self.output_connections.remove(connection)
-
 		if isinstance(node, Node):
-			if connection in node.input_connections:
-				node.input_connections.remove(connection)
-
-	def add_input(self, input, input_name=''):
-		"""
-		Adds a received input to the list of received inputs.
-		:param input:
-		:param input_name:
-		:return:
-		"""
-		if input_name == '':
-			self.inputs.setdefault(input_name, []).append(input)
+			if self in node.input_connections:
+				self.eventNotify -= node.receive_input
+				configurations = node.input_connections[self]
+				for configuration in configurations:
+					conn_name = configuration['connection_name']
+					if connection_name == conn_name:
+						configurations.remove(configuration)
+					if len(configurations) == 0:
+						node.input_connections.pop(self)
 		else:
-			self.inputs[input_name] = input
+			self.eventNotify -= node  # treat it like a callable
 
-	def receive_input(self, *args, **kwargs):
-		"""
-		Receives an input from an input connection.
-		:param args:
-		:param kwargs:
-		:return:
-		"""
-		if len(args) > 0:
-			self.add_input(*args)
-		elif len(kwargs) > 0:
-			key, arg = list(kwargs.items())[0]  # TODO pasarle todos los parámetros del diccionario
-			exists_input_connection = any(key == connection.output_name for connection in self.input_connections)
-			if exists_input_connection:
-				self.add_input(arg, key)
-			else:
-				print('Warning: Trying to add input not registered as input connection:', key)
-		elif len(self.input_connections) > 0:
-			self.input_notifications += 1
-
-		self.eventReceivedInput.invoke(*args, **kwargs)
+	def receive_input(self, node, node_output):
+		self.inputs[node] = node_output
+		self.eventReceivedInput.invoke(node, node_output)
+		if self.all_inputs_received():
+			self.eventAllInputsReceived.invoke(self)
+			if self.sequential:
+				self.execute_and_notify()  # TODO considerar poner esto como un observer del evento eventAllInputsReceived
 
 	def all_inputs_received(self):
 		"""
 		Verificar si todas las entradas han sido recibidas.
 		:return: True si se recibieron todas las entradas, False en caso contrario.
 		"""
-		unnamed_inputs = len(self.inputs['']) if '' in self.inputs else 0
-		named_inputs = (len(self.inputs) - 1) if '' in self.inputs else len(self.inputs)
-		total_inputs = unnamed_inputs + named_inputs
-		if len(self.input_connections) != total_inputs:
+		if self.inputs.keys() != self.input_connections.keys():
 			return False
 		return True
 
-	def execute_action(self):
+	def get_input_args(self):
+		args = []
+		kwargs = {}
+		for node, configurations in self.input_connections.items():
+			input = self.inputs[node]
+			for conf in configurations:
+				if 'ignore_output' in conf and conf['ignore_output']:
+					continue
+				input_name = conf['connection_name']
+				if input_name == '':
+					args.append(input)
+				else:
+					kwargs[input_name] = input
+		return args, kwargs
+
+	def execute_action(self, args=None, kwargs=None):
 		if self.__action_inputs > 0:
-			inputs = self.inputs.pop('') if '' in self.inputs else []
-			named_inputs = self.inputs
-			self.output = self.action(*inputs, **named_inputs)
+			if not args and not kwargs:
+				args, kwargs = self.get_input_args()
+			else:
+				args = args if args else []
+				kwargs = kwargs if kwargs else {}
+			self.output = self.action(*args, **kwargs)
 		else:
 			self.output = self.action()
 		self.eventActionExecuted.invoke(self.output)
@@ -113,27 +109,19 @@ class Node(object):
 		TODO
 		:return:
 		"""
-		for connection in self.output_connections:
-			connection.send_output(self.output)
+		self.eventNotify.invoke(self, self.output)
 
-	def clear_inputs_output(self):
+	def clear_inputs(self):
 		"""
-		Limpiar el diccionario de las entradas recibidas y la salida calculada.
+		Limpiar el diccionario de las entradas recibidas.
 		:return:
 		"""
 		self.inputs.clear()
-		self.input_notifications = 0
-		self.output = None
 
-	def execute_and_notify(self):
-		self.execute_action()
+	def execute_and_notify(self, args=None, kwargs=None):
+		self.execute_action(args, kwargs)
+		self.clear_inputs()
 		self.notify()
-		self.clear_inputs_output()
 
 	def __call__(self, *args, **kwargs):
-		self.receive_input(*args, **kwargs)
-		if self.all_inputs_received():
-			self.eventAllInputsReceived.invoke(self)
-			if self.sequential:
-				self.execute_and_notify()  # TODO considerar poner esto como un observer del evento eventAllInputsReceived
-
+		self.execute_and_notify(args, kwargs)
