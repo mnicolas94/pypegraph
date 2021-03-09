@@ -9,29 +9,6 @@ class TestPypegraphUseCases(unittest.TestCase):
 	def setUp(self):
 		super().setUp()
 
-	def test_node_disconnection(self):
-		n1 = Node(action=lambda: 1)
-		n2 = Node(action=lambda x: 2 + x)
-
-		def f3(*xs): return sum(xs)
-		n3 = Node(action=f3)
-
-		def f4(x):
-			global result
-			result = x**2
-		n4 = Node(action=lambda x: f4(x))
-
-		n1.connect(n2)
-		n1.connect(n3)
-		n2.connect(n3)
-		n3.connect(n4)
-
-		n1()
-		self.assertEqual(result, 16)
-		n1.disconnect(n3)
-		n1()
-		self.assertEqual(result, 9)
-
 	def test_simple_pipeline(self):
 		def detection(img):
 			return [((1, 1, 40, 40), 0.5), ((40, 50, 140, 150), 0.9)]
