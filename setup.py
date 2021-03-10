@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.0.1",
     author="Miguel Nicolás-Díaz",
     author_email="miguelcok27@gmail.com",
-    description="A module for defining pieline processing graphs.",
+    description="A module for defining pipeline processing graphs.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mnicolas94/pypegraph",
