@@ -18,13 +18,12 @@ class Connection(object):
 		self.outputless = conf.pop('outputless', False)  # ignore input_node's output and just notify end of execution
 		self.parallel = conf.pop('parallel', False)  # execution of output node will be done in another thread (or process)
 
-	def send_output(self, output):
-		if self.outputless or self.__output_inputs == 0:
-			self.output_node()
-		elif self.output_name == '':
-			self.output_node(*[output])
+	def send_output(self, output) -> dict:
+		if self.output_name == '':
+			outputs = self.output_node(*[output])
 		else:
-			self.output_node(**{self.output_name: output})
+			outputs = self.output_node(**{self.output_name: output})
+		return outputs
 		# TODO multiple outputs
 
 	def __eq__(self, other):

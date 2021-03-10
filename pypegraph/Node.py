@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from pypegraph import utils
 from pypegraph.Action import Action
 
@@ -11,7 +13,7 @@ class Node(object):
 		self.inputs = {}
 		self.input_connections = {}
 
-		self.output = None
+		self._output = None
 		self.output_connections = []
 
 		self.action = action
@@ -24,6 +26,14 @@ class Node(object):
 		self.eventAllInputsReceived = Action()
 		self.eventActionExecuted = Action()
 		self.eventNotify = Action()
+
+	@property
+	def input_connections_count(self):
+		return len(self.input_connections)
+
+	@property
+	def output_connections_count(self):
+		return len(self.output_connections)
 
 	def connect(self, node, connection_name='', **configuration):
 		"""
@@ -39,6 +49,20 @@ class Node(object):
 			node.input_connections.setdefault(self, []).append(configuration)
 		else:
 			self.eventNotify += node  # treat it like a callable
+
+	def __or__(self, other):
+		node = other
+		connection_name = ""
+		configuration = {}
+		if isinstance(other, Tuple):
+			if len(other) == 2:
+				node, connection_name = other
+				configuration = {}
+			elif len(other) == 3:
+				node, connection_name = other
+				configuration = {}
+		self.connect(node, connection_name, **configuration)
+		return self
 
 	def disconnect(self, node, connection_name=''):
 		"""
@@ -68,7 +92,7 @@ class Node(object):
 			if self.sequential:
 				self.execute_and_notify()  # TODO considerar poner esto como un observer del evento eventAllInputsReceived
 
-	def all_inputs_received(self):
+	def _all_inputs_received(self):
 		"""
 		Verificar si todas las entradas han sido recibidas.
 		:return: True si se recibieron todas las entradas, False en caso contrario.
@@ -101,10 +125,10 @@ class Node(object):
 				kwargs = kwargs if kwargs else {}
 			self.output = self.action(*args, **kwargs)
 		else:
-			self.output = self.action()
-		self.eventActionExecuted.invoke(self.output)
+			self._output = self.action()
+		self.eventActionExecuted.invoke(self._output)
 
-	def notify(self):
+	def _notify(self) -> dict:
 		"""
 		TODO
 		:return:
@@ -125,3 +149,30 @@ class Node(object):
 
 	def __call__(self, *args, **kwargs):
 		self.execute_and_notify(args, kwargs)
+		backpropagated_outputs = {}
+		for connection in self.output_connections:
+			outputs = connection.send_output(self._output) or {}
+			for key in outputs.keys():
+				backpropagated_outputs[key] = outputs[key]
+
+		return backpropagated_outputs
+
+	def _execute_and_notify(self) -> dict:
+		self._execute_action()
+		self._clear_inputs()
+
+		backpropagated_outputs = self._notify()
+		backpropagated_outputs[self] = self._output
+
+		return backpropagated_outputs
+
+	def __call__(self, *args, **kwargs) -> dict:
+		self._receive_input(*args, **kwargs)
+		if self._all_inputs_received():
+			self.eventAllInputsReceived.invoke(self)
+			if self.sequential:
+				graph_outputs = self._execute_and_notify()  # TODO considerar poner esto como un observer del evento eventAllInputsReceived
+				return graph_outputs
+
+		return {}
+
