@@ -37,7 +37,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 
 		# run pipeline
 		input_node()
-		self.assertEqual(num_outputs, 1)
+		self.assertEqual(1, num_outputs)
 
 	def test_semicomplex_pipeline(self):
 		def detection(img):
@@ -92,7 +92,7 @@ class TestPypegraphUseCases(unittest.TestCase):
 
 		# run pipeline
 		input_node()
-		self.assertEqual(end_reached, 1)
+		self.assertEqual(1, end_reached)
 
 
 if __name__ == '__main__':
