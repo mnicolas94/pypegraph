@@ -16,7 +16,6 @@ class Node(object):
 
 		self._output = None
 		self._output_connections: Dict[Node, dict] = {}
-		# self._output_connections = {}
 
 		self._action = action
 		self.__action_inputs = utils.number_callable_params(self._action)
