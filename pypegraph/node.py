@@ -8,6 +8,7 @@ from pypegraph.action import Action
 class Node(object):
 	"""
 	TODO
+
 	"""
 
 	def __init__(self, action, sequential=True):
