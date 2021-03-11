@@ -1,7 +1,7 @@
 from typing import Tuple, Dict
 
 from pypegraph import utils
-from pypegraph.Action import Action
+from pypegraph.action import Action
 
 
 class Node(object):

@@ -1,4 +1,4 @@
-from pypegraph.Node import Node
+from pypegraph.node import Node
 import unittest
 from tests import testutils
 
