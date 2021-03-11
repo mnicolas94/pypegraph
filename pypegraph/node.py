@@ -1,3 +1,4 @@
+import copy
 from typing import Tuple, Dict
 
 from pypegraph import utils
@@ -34,6 +35,14 @@ class Node(object):
 	@property
 	def output_connections_count(self):
 		return len(self._output_connections)
+
+	@property
+	def input_connections(self):
+		return copy.copy(self._input_connections)
+
+	@property
+	def output_connections(self):
+		return copy.copy(self._output_connections)
 
 	def connect(self, node, connection_name='', **configuration):
 		"""
