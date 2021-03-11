@@ -125,23 +125,46 @@ class TestNode(unittest.TestCase):
         }
         self.assertEqual(outputs, expected)
 
-    def test_whenGetLastNodes_nodesAreCorrect(self):
-        # arrange
-        n1 = Node(lambda: print('node 1'))
-        n2 = Node(lambda: print('node 2'))
-        n3 = Node(lambda: print('node 3'))
-        n4 = Node(lambda: print('node 4'))
+    def test_whenExecuteIntermediateNode_getExpectedOutputs(self):
+        n1 = Node(action=lambda: 1)
+        n2 = Node(action=lambda x: 2 + x)
 
-        n1 |= n2 | n3
-        n1 |= n3
-        n2 |= n4
+        def f3(*xs): return sum(xs)
 
-        # act
-        last_nodes = n1.output_nodes
+        n3 = Node(action=f3)
 
-        # assert
-        expected = [n3, n4]
-        self.assertEqual(last_nodes, expected)
+        def f4(x):
+            return x ** 2
+
+        n4 = Node(action=lambda x: f4(x))
+
+        n1.connect(n2)
+        n1.connect(n3)
+        n2.connect(n3)
+        n3.connect(n4)
+
+        outputs = n3(*[1, 2, 3, 4])
+        expected = {
+            n3: 10,
+            n4: 100
+        }
+        self.assertEqual(outputs, expected)
+
+    def test_whenConnectionIsIgnoreOutput_resultsAreConsistentWithThatOutputIgnored(self):
+        n1 = Node(action=lambda: 1)
+        n2 = Node(action=lambda x: 2 + x)
+        n3 = Node(action=lambda *xs: sum(xs))
+        n4 = Node(action=lambda x: x**2)
+
+        n1.connect(n2)
+        n1.connect(n3, ignore_output=True)
+        n2.connect(n3)
+        n3.connect(n4)
+
+        outputs = n1()
+        result = outputs[n4]
+        expected = 9
+        self.assertEqual(result, expected)
 
 
 if __name__ == '__main__':
