@@ -128,15 +128,8 @@ class TestNode(unittest.TestCase):
     def test_whenExecuteIntermediateNode_getExpectedOutputs(self):
         n1 = Node(action=lambda: 1)
         n2 = Node(action=lambda x: 2 + x)
-
-        def f3(*xs): return sum(xs)
-
-        n3 = Node(action=f3)
-
-        def f4(x):
-            return x ** 2
-
-        n4 = Node(action=lambda x: f4(x))
+        n3 = Node(action=lambda *xs: sum(xs))
+        n4 = Node(action=lambda x: x ** 2)
 
         n1.connect(n2)
         n1.connect(n3)
@@ -165,6 +158,28 @@ class TestNode(unittest.TestCase):
         result = outputs[n4]
         expected = 9
         self.assertEqual(result, expected)
+
+    def test_whenGetName_nameIsCorrect(self):
+        # arrange
+        n1, _ = testutils.get_graph()
+
+        # act
+        name = n1.name
+
+        # assert
+        expected = 'n1'
+        self.assertEqual(expected, name)
+
+    def test_whenGetNameVerbose_nameIsCorrect(self):
+        # arrange
+        n1, _ = testutils.get_graph()
+
+        # act
+        name = n1.name_verbose
+
+        # assert
+        expected = 'n1 0 -> 3'
+        self.assertEqual(expected, name)
 
 
 if __name__ == '__main__':
