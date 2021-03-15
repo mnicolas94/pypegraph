@@ -99,3 +99,24 @@ def leaf_nodes(node: Node):
             leafs.append(n)
     return leafs
 
+
+def print_pipeline_depth_first(node: Node) -> str:
+    connections = traverse_connections_depth_first(node)
+    string = ''
+    for connection in connections:
+        n1, n2 = connection
+        s = f"{n1} -> {n2}"
+        string += f'{s}\n'
+        print(s)
+    return string
+
+
+def print_pipeline_breadth_first(node: Node) -> str:
+    connections = traverse_connections_breadth_first(node)
+    string = ''
+    for connection in connections:
+        n1, n2 = connection
+        s = f"{n1} -> {n2}"
+        string += f'{s}\n'
+        print(s)
+    return string
