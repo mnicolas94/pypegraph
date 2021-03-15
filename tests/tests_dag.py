@@ -33,6 +33,50 @@ class TestDag(unittest.TestCase):
         expected = [n1, n2, n3, n4, n5, n6, n7]
         self.assertEqual(expected, nodes)
 
+    def test_whenTraverseConnectionsDepth_nodesOrderIsCorrect(self):
+        # arrange
+        graph, (n1, n2, n3, n4, n5, n6, n7) = testutils.get_graph()
+
+        # act
+        connections = dag.traverse_connections_depth_first(graph)
+        connections = list(connections)
+
+        # assert
+        expected = [
+            (n1, n2),
+            (n2, n5),
+            (n5, n6),
+            (n6, n7),
+            (n5, n7),
+            (n1, n3),
+            (n3, n5),
+            (n1, n4),
+            (n4, n6)
+        ]
+        self.assertEqual(expected, connections)
+
+    def test_whenTraverseConnectionsBreadth_nodesOrderIsCorrect(self):
+        # arrange
+        graph, (n1, n2, n3, n4, n5, n6, n7) = testutils.get_graph()
+
+        # act
+        connections = dag.traverse_connections_depth_first(graph)
+        connections = list(connections)
+
+        # assert
+        expected = [
+            (n1, n2),
+            (n1, n3),
+            (n1, n4),
+            (n2, n5),
+            (n3, n5),
+            (n4, n6),
+            (n5, n6),
+            (n5, n7),
+            (n6, n7),
+        ]
+        self.assertEqual(expected, connections)
+
     def test_whenGetLeafNodes_nodesAreCorrect(self):
         # arrange
         graph, (n1, n2, n3, n4, n5, n6, n7) = testutils.get_graph()

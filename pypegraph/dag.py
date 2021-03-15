@@ -49,6 +49,14 @@ def traverse_breadth_first(node: Node) -> Generator:
                 check_queue.append(child_node)
 
 
+def traverse_connections_depth_first(node: Node) -> Generator:
+    pass
+
+
+def traverse_connections_breadth_first(node: Node) -> Generator:
+    pass
+
+
 def leaf_nodes(node: Node):
     nodes = traverse_depth_first(node)
 
