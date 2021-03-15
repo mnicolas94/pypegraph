@@ -60,7 +60,7 @@ class TestDag(unittest.TestCase):
         graph, (n1, n2, n3, n4, n5, n6, n7) = testutils.get_graph()
 
         # act
-        connections = dag.traverse_connections_depth_first(graph)
+        connections = dag.traverse_connections_breadth_first(graph)
         connections = list(connections)
 
         # assert

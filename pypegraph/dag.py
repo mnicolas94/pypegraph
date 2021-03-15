@@ -5,10 +5,10 @@ from pypegraph.node import Node
 
 def traverse_depth_first(node: Node) -> Generator:
     """
-        Traverse a directed acyclic graph using depth-first search.
-        :param node: first node of the graph
-        :return: a list with the nodes in depth-first order.
-        """
+    Traverse a directed acyclic graph using depth-first search.
+    :param node: first node of the graph
+    :return: a list with the nodes in depth-first order.
+    """
     visited = [node]
     yield node
 
@@ -50,11 +50,43 @@ def traverse_breadth_first(node: Node) -> Generator:
 
 
 def traverse_connections_depth_first(node: Node) -> Generator:
-    pass
+    visited = []
+
+    check_list = []
+    childs = list(node.output_connections.keys())
+    for child in childs:
+        check_list.append((node, child))
+
+    while len(check_list) > 0:
+        next_connection = check_list.pop(0)
+        if next_connection not in visited:
+            visited.append(next_connection)
+            yield next_connection
+            n1, n2 = next_connection
+            childs = n2.output_connections
+            childs_nodes = list(childs.keys())
+            for i, child_node in enumerate(childs_nodes):
+                check_list.insert(i, (n2, child_node))
 
 
 def traverse_connections_breadth_first(node: Node) -> Generator:
-    pass
+    visited = []
+
+    check_list = []
+    childs = list(node.output_connections.keys())
+    for child in childs:
+        check_list.append((node, child))
+
+    while len(check_list) > 0:
+        next_connection = check_list.pop(0)
+        if next_connection not in visited:
+            visited.append(next_connection)
+            yield next_connection
+            n1, n2 = next_connection
+            childs = n2.output_connections
+            childs_nodes = list(childs.keys())
+            for i, child_node in enumerate(childs_nodes):
+                check_list.append((n2, child_node))
 
 
 def leaf_nodes(node: Node):
