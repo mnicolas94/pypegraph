@@ -8,10 +8,10 @@ from pypegraph.action import Action
 class Node(object):
     """
     TODO
-
     """
 
-    def __init__(self, action, sequential=True):
+    def __init__(self, action, name='-', sequential=True):
+        self._name = name
         self._inputs_received = {}
         self._input_connections = {}
 
@@ -27,6 +27,20 @@ class Node(object):
         self.eventReceivedInput = Action()
         self.eventAllInputsReceived = Action()
         self.eventActionExecuted = Action()
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def name_verbose(self):
+        input_count = self.input_connections_count
+        output_count = self.output_connections_count
+        verbose_name = f'{self.name} {input_count} -> {output_count}'
+        return verbose_name
+
+    def __str__(self):
+        return self.name
 
     @property
     def input_connections_count(self):

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pypegraph",
-    version="0.1.0",
+    version="0.1.1",
     author="Miguel Nicolás-Díaz",
     author_email="miguelcok27@gmail.com",
     description="A module for defining pipeline processing graphs.",
