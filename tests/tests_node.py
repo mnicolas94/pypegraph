@@ -75,6 +75,20 @@ class TestNode(unittest.TestCase):
         n2_output = outputs[n2]
         self.assertEqual(n2_output, 2)
 
+    def test_whenConnectSameNodeWithDifferentConnectionName_inputsAndOutputsCountsAreCorrect(self):
+        # arrange
+        n1 = Node(lambda: print("node 1"))
+        n2 = Node(lambda x, y: print(f"node 2: {x + y}"))
+
+        # action
+        n1.connect(n2, 'x')
+        n1.connect(n2, 'y')
+
+        # assert
+        self.assertEqual(n1.output_connections_count, 1)
+        self.assertEqual(n2.input_connections_count, 1)
+        self.assertEqual(len(n2.input_connections[n1]), 2)
+
     def test_whenDisconnectNode_resultsAreConsistent(self):
         n1 = Node(action=lambda: 1)
         n2 = Node(action=lambda x: 2 + x)
@@ -93,6 +107,67 @@ class TestNode(unittest.TestCase):
 
         outputs = n1()
         self.assertEqual(outputs[n3], 3)
+
+    def test_whenDisconnectNamedConfiguration_remainingConfigurationsAreCorrect(self):
+        # arrange
+        n1 = Node(lambda: print("node 1"))
+        n2 = Node(lambda x, y: print(f"node 2: {x + y}"))
+        n1.connect(n2, 'x')
+        n1.connect(n2, 'y')
+
+        # false positive assertion
+        self.assertEqual(n1.output_connections_count, 1)
+        self.assertEqual(n2.input_connections_count, 1)
+        self.assertEqual(len(n2.input_connections[n1]), 2)
+
+        # action
+        n1.disconnect_named_connection(n2, 'x')
+
+        # assert
+        self.assertEqual(n1.output_connections_count, 1)
+        self.assertEqual(n2.input_connections_count, 1)
+        self.assertEqual(len(n2.input_connections[n1]), 1)
+        self.assertEqual(n2.input_connections[n1][0]['connection_name'], 'y')
+
+    def test_whenDisconnectAllInputs_nodeInputsEqualsZero(self):
+        # arrange
+        n1 = Node(lambda: print("node 1"))
+        n2 = Node(lambda: print("node 2"))
+        n3 = Node(lambda: print("node 3"))
+        n4 = Node(lambda: print("node 4"))
+
+        n1 |= n4
+        n2 |= n4
+        n3 |= n4
+
+        # false positive assertion
+        self.assertEqual(n4.input_connections_count, 3)
+
+        # action
+        n4.disconnect_all_inputs()
+
+        # assert
+        self.assertEqual(n4.input_connections_count, 0)
+
+    def test_whenDisconnectAllOutputs_nodeOutputsEqualsZero(self):
+        # arrange
+        n1 = Node(lambda: print("node 1"))
+        n2 = Node(lambda: print("node 2"))
+        n3 = Node(lambda: print("node 3"))
+        n4 = Node(lambda: print("node 4"))
+
+        n1 |= n2
+        n1 |= n3
+        n1 |= n4
+
+        # false positive assertion
+        self.assertEqual(n1.output_connections_count, 3)
+
+        # action
+        n1.disconnect_all_outputs()
+
+        # assert
+        self.assertEqual(n1.output_connections_count, 0)
 
     def test_whenCallSingleNodeGraph_getOutput(self):
         # arrange

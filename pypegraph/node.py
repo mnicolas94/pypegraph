@@ -1,5 +1,5 @@
 import copy
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 from pypegraph import utils
 from pypegraph.action import Action
@@ -13,7 +13,7 @@ class Node(object):
     def __init__(self, action, name='-', sequential=True):
         self._name = name
         self._inputs_received = {}
-        self._input_connections = {}
+        self._input_connections: Dict[Node, List[Dict]] = {}
 
         self._output = None
         self._output_connections: Dict[Node, dict] = {}
@@ -85,15 +85,20 @@ class Node(object):
         self.connect(node, connection_name, **configuration)
         return self
 
-    def disconnect(self, node, connection_name=''):
+    def disconnect(self, node: "Node"):
+        if node in self._output_connections:
+            self._output_connections.pop(node)
+        if isinstance(node, Node):
+            if self in node._input_connections:
+                node._input_connections.pop(self)
+
+    def disconnect_named_connection(self, node: "Node", connection_name=''):
         """
         TODO
         :param node:
         :param connection_name:
         :return:
         """
-        if node in self._output_connections:
-            self._output_connections.pop(node)
         if isinstance(node, Node):
             if self in node._input_connections:
                 configurations = node._input_connections[self]
@@ -103,6 +108,18 @@ class Node(object):
                         configurations.remove(configuration)
                     if len(configurations) == 0:
                         node._input_connections.pop(self)
+                        if node in self._output_connections:
+                            self._output_connections.pop(node)
+
+    def disconnect_all_inputs(self):
+        input_nodes = [node for node, _ in self._input_connections.items()]
+        for node in input_nodes:
+            node.disconnect(self)
+
+    def disconnect_all_outputs(self):
+        output_nodes = [node for node, _ in self._output_connections.items()]
+        for node in output_nodes:
+            self.disconnect(node)
 
     def _push_input_from_node(self, node, node_output):
         self._inputs_received[node] = node_output

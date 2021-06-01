@@ -1,5 +1,4 @@
 from pypegraph import dag
-from pypegraph.node import Node
 import unittest
 from tests import testutils
 
