@@ -1,4 +1,7 @@
+import copy
+
 from pypegraph.node import Node
+from pypegraph import dag
 import unittest
 from tests import testutils
 
@@ -255,6 +258,44 @@ class TestNode(unittest.TestCase):
         # assert
         expected = 'n1 0 -> 3'
         self.assertEqual(expected, name)
+
+    def test_whenCopy_resultIsCorrect(self):
+        # arrange
+        n1 = Node(action=lambda: print('node 1'), name='node 1')
+        n2 = Node(action=lambda: print('node 2'), name='node 2')
+        n3 = Node(action=lambda: print('node 3'), name='node 3')
+
+        n1.connect(n2, 'n2')
+        n1.connect(n3, 'n3')
+
+        # act
+        n1copy = copy.copy(n1)
+
+        # assert
+        self.assertEqual(n1.name, n1copy.name)
+        for connection, connection_copy in zip(n1.output_connections.items(), n1copy.output_connections.items()):
+            node, conf = connection
+            node_copy, conf_copy = connection_copy
+            self.assertEqual(node, node_copy)
+            self.assertEqual(conf, conf_copy)
+
+    def test_whenDeepCopy_resultIsCorrect(self):
+        # arrange
+        n1, _ = testutils.get_graph()
+
+        # act
+        n1copy = copy.deepcopy(n1)
+
+        # assert
+        bfs = dag.traverse_breadth_first(n1)
+        bfscopy = dag.traverse_breadth_first(n1copy)
+        for node, nodecopy in zip(bfs, bfscopy):
+            self.assertEqual(node.name, nodecopy.name)
+            for connection, connection_copy in zip(node.output_connections.items(), nodecopy.output_connections.items()):
+                child, conf = connection
+                child_copy, conf_copy = connection_copy
+                self.assertNotEqual(child, child_copy)
+                self.assertEqual(conf, conf_copy)
 
 
 if __name__ == '__main__':

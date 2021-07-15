@@ -201,3 +201,40 @@ class Node(object):
     def __call__(self, *args, **kwargs) -> dict:
         graph_outputs = self._execute_and_notify(args, kwargs)
         return graph_outputs
+
+    def __copy__(self):
+        self_copy = Node(action=self._action, name=self._name, sequential=self._sequential)
+        for node, conf in self._output_connections.items():
+            conf_copy = copy.copy(conf)
+            connection_name = conf_copy.pop('connection_name')
+            self_copy.connect(node, connection_name, **conf_copy)
+        return self_copy
+
+    def __deepcopy__(self, memodict={}):
+        self_copy = Node(action=self._action, name=self._name, sequential=self._sequential)
+
+        copies_dict = {self: self_copy}
+        traversal_queue = [self]
+        visited = []
+
+        while len(traversal_queue) > 0:
+            node = traversal_queue[0]
+            traversal_queue.remove(node)
+            node_copy = copies_dict[node]
+            visited.append(node)
+
+            for connected_node, conf in node._output_connections.items():
+                if connected_node in copies_dict:
+                    connected_node_copy = copies_dict[connected_node]
+                else:
+                    connected_node_copy = Node(
+                        action=connected_node._action,
+                        name=connected_node._name,
+                        sequential=connected_node._sequential)
+                    copies_dict[connected_node] = connected_node_copy
+                conf_copy = copy.copy(conf)
+                connection_name = conf_copy.pop('connection_name')
+                node_copy.connect(connected_node_copy, connection_name, **conf_copy)
+                if connected_node not in visited:
+                    traversal_queue.append(connected_node)
+        return self_copy
