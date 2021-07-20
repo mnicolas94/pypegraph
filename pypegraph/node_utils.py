@@ -1,4 +1,22 @@
 from pypegraph.node import Node
+from pypegraph import dag
+
+
+def _do_nothing(*args, **kwargs):
+    return args, kwargs
+
+
+def get_empty_node():
+    node = Node(action=_do_nothing)
+    return node
+
+
+def get_only_one_output(node: Node, *args, **kwargs):
+    leafs = dag.leaf_nodes(node)
+    leaf = leafs[0]
+    outputs = node(*args, **kwargs)
+    result = outputs[leaf]
+    return result
 
 
 def replace_node(node: Node, replacement: Node):

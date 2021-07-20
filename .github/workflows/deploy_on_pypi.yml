@@ -2,6 +2,9 @@ name: Publish Python 🐍 distributions 📦 to PyPI
 
 # Controls when the action will run. 
 on:
+  push:
+    branches: [ master ]
+
   workflow_dispatch:
 
 jobs:
@@ -9,7 +12,7 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v2
     - name: Set up Python 3.6
       uses: actions/setup-python@v1
       with:
@@ -28,7 +31,11 @@ jobs:
         --wheel
         --outdir dist/
         .
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Publish a Python distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+    - name: Push new version as tag
+      run: |
+        python setup.py pushtag

@@ -203,7 +203,7 @@ class Node(object):
         return graph_outputs
 
     def __copy__(self):
-        self_copy = Node(action=self._action, name=self._name, sequential=self._sequential)
+        self_copy = type(self)(action=self._action, name=self._name, sequential=self._sequential)
         for node, conf in self._output_connections.items():
             conf_copy = copy.copy(conf)
             connection_name = conf_copy.pop('connection_name')
@@ -211,7 +211,7 @@ class Node(object):
         return self_copy
 
     def __deepcopy__(self, memodict={}):
-        self_copy = Node(action=self._action, name=self._name, sequential=self._sequential)
+        self_copy = type(self)(action=self._action, name=self._name, sequential=self._sequential)
 
         copies_dict = {self: self_copy}
         traversal_queue = [self]
