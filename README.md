@@ -26,7 +26,7 @@ node1 |= (node2, "number")  # connect both nodes with a connection name
 outputs = node1(2)
 node2_output = outputs[node2]  # should be 4
 ```
-# COnnections
+# Connections
 You can connect nodes in several ways
 ```python
 node1 = Node(lambda: print("Node1 is executing"), name="Node1")
@@ -38,4 +38,7 @@ n1 = n1 | n2
 n1 |= n2
 # or
 n1.connect(n2)
+
+# nodes can be disconnected with
+n1.disconnect(n2)
 ```
