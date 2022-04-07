@@ -1,43 +1,54 @@
-name: Publish Python 🐍 distributions 📦 to PyPI
+name: Publish on PyPi
 
-# Controls when the action will run. 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 
   workflow_dispatch:
 
 jobs:
-  build-n-publish:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-    runs-on: ubuntu-18.04
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/checkout@v2
-    with:
-      fetch-depth: 0
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.6
-    - name: Install pypa/build
-      run: >-
-        python -m
-        pip install
-        build
-        --user
-    - name: Build a binary wheel and a source tarball
-      run: >-
-        python -m
-        build
-        --sdist
-        --wheel
-        --outdir dist/
-        .
-    - name: Publish a Python distribution to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
-    - name: Push new version as tag
-      run: |
-        python setup.py pushtag
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.6
+      - name: Install pypa/build
+        run: >-
+          python -m
+          pip install
+          build
+          --user
+      - name: check if should build or not
+        id: shouldbuild
+        run: |
+          message=$(git log -1 --pretty=%B)
+          if [[ $message == *"--dont_build"* ]]; then
+            should=false
+          else
+            should=true
+          fi
+          echo "::set-output name=should::$should"
+      - name: Build a binary wheel and a source tarball
+        if: ${{ steps.shouldbuild.outputs.should == 'true' }}
+        run: >-
+          python -m
+          build
+          --sdist
+          --wheel
+          --outdir dist/
+          .
+      - name: Publish a Python distribution to PyPI
+        if: ${{ steps.shouldbuild.outputs.should == 'true' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Push new version as tag
+        run: |
+          python setup.py pushtag
